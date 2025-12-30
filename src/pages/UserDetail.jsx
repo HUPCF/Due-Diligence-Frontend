@@ -340,7 +340,7 @@ const UserDetail = () => {
                               <ul className="list-disc list-inside ml-4">
                                 {editingResponseFile.map((fileInfo, index) => (
                                   <li key={index} className="text-sm flex items-center">
-                                    <a href={fileInfo.secureUrl} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
+                                    <a href={`/api/responses/download/${encodeURIComponent(fileInfo.storedFileName)}`} download={fileInfo.originalName} className="text-indigo-600 hover:underline">
                                       {fileInfo.originalName}
                                     </a>
                                     <button
@@ -414,9 +414,8 @@ const UserDetail = () => {
                                       {userResponse.file_paths.map((fileInfo, index) => (
                                         <li key={index} className="text-sm">
                                           <a
-                                            href={fileInfo.secureUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
+                                            href={`/api/responses/download/${encodeURIComponent(fileInfo.storedFileName)}`}
+                                            download={fileInfo.originalName}
                                             className="text-indigo-600 hover:underline"
                                           >
                                             {fileInfo.originalName}
@@ -505,9 +504,8 @@ const UserDetail = () => {
                 {userDocuments.map((doc) => (
                   <li key={doc.id} className="p-4 flex items-center justify-between">
                     <a
-                      href={doc.file_path}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href={`/api/documents/download/${encodeURIComponent(doc.storedFileName || doc.file_path)}`}
+                      download={doc.file_name}
                       className="text-indigo-600 hover:underline flex-grow"
                     >
                       {doc.file_name}

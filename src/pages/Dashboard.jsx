@@ -271,7 +271,7 @@ const Dashboard = () => {
                         <ul className="list-disc list-inside ml-4">
                           {currentResponse.file_paths.map((fileInfo, index) => (
                             <li key={index} className="text-sm flex items-center">
-                              <a href={fileInfo.secureUrl} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
+                              <a href={`/api/responses/download/${encodeURIComponent(fileInfo.storedFileName)}`} download={fileInfo.originalName} className="text-indigo-600 hover:underline">
                                 {fileInfo.originalName}
                               </a>
                               {/* Only show delete button if it's the user's own response */}
