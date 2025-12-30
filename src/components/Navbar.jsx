@@ -6,6 +6,14 @@ const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
+  // Debug: Log user data to see if company_name is present
+  React.useEffect(() => {
+    if (user) {
+      console.log('Navbar - User data:', user);
+      console.log('Navbar - Company name:', user.company_name);
+    }
+  }, [user]);
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -58,14 +66,12 @@ const Navbar = () => {
           </div>
           <div className="hidden md:block">
             <div className="ml-4 flex items-center md:ml-6">
-              <div className="flex flex-col items-end">
-                <span className="text-gray-700 text-sm">
-                  Welcome, {user ? user.email : 'Guest'}
-                </span>
-                <span className="text-gray-500 text-xs">
-                  {user ? user.company_name : ''}
-                </span>
-              </div>
+              <span className="text-gray-700 text-sm">
+                Welcome, {user ? user.email : 'Guest'}
+                {user && user.company_name && (
+                  <span className="ml-2 text-indigo-600 font-medium">({user.company_name})</span>
+                )}
+              </span>
               <button
                 onClick={handleLogout}
                 className="ml-4 bg-red-500 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-red-600"

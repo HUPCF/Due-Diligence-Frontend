@@ -175,6 +175,11 @@ const CompanyManagement = () => {
     setLoading(true);
     try {
       const response = await api.get('/companies');
+      console.log('Companies data:', response.data);
+      // Log each company's counts for debugging
+      response.data.forEach(company => {
+        console.log(`Company ${company.name}: user_count=${company.user_count} (type: ${typeof company.user_count}), response_count=${company.user_response_count} (type: ${typeof company.user_response_count}), doc_count=${company.document_count} (type: ${typeof company.document_count})`);
+      });
       setCompanies(response.data);
     } catch (error) {
       console.error('Error fetching companies:', error);
@@ -244,16 +249,28 @@ const CompanyManagement = () => {
                   >
                     <PencilIcon className="h-5 w-5" />
                   </button>
-                  <button
-                    onClick={() => {
-                      setSelectedCompany(company);
-                      setShowDeleteModal(true);
-                    }}
-                    className="text-gray-500 hover:text-red-600"
-                    title="Delete"
-                  >
-                    <TrashIcon className="h-5 w-5" />
-                  </button>
+                  {(() => {
+                    const userCount = Number(company.user_count) || 0;
+                    const responseCount = Number(company.user_response_count) || 0;
+                    const docCount = Number(company.document_count) || 0;
+                    const hasData = userCount > 0 || responseCount > 0 || docCount > 0;
+                    
+                    if (!hasData) {
+                      return (
+                        <button
+                          onClick={() => {
+                            setSelectedCompany(company);
+                            setShowDeleteModal(true);
+                          }}
+                          className="text-gray-500 hover:text-red-600"
+                          title="Delete"
+                        >
+                          <TrashIcon className="h-5 w-5" />
+                        </button>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
               </div>
             ))}
