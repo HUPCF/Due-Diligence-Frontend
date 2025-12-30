@@ -482,7 +482,9 @@ const UserManagement = () => {
                      
                         <Link to={`/admin/users/${user.id}`} className="text-blue-600 hover:text-blue-900" title="View Details"><EyeIcon className="h-5 w-5 inline" /></Link>
                       
-                      <button onClick={() => { setSelectedUser(user); setShowDeleteModal(true); }} className="text-red-600 hover:text-red-900" title="Delete User"><TrashIcon className="h-5 w-5 inline" /></button>
+                      {!user.has_data && (
+                        <button onClick={() => { setSelectedUser(user); setShowDeleteModal(true); }} className="text-red-600 hover:text-red-900" title="Delete User"><TrashIcon className="h-5 w-5 inline" /></button>
+                      )}
                     </td>
                   </tr>
                 ))}
