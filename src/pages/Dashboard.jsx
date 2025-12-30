@@ -3,6 +3,57 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
+// Helper function to download a file programmatically
+const downloadFile = async (fileName, originalName, endpoint = 'responses') => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    // Use the same logic as api.js to determine the base URL
+    // Note: fetch() doesn't use Vite proxy, so we need the full URL in development
+    let apiBaseUrl;
+    if (import.meta.env.VITE_API_BASE_URL) {
+      apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+    } else if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      if (hostname === 'dd.cp.hupcfl.com' || hostname.includes('hupcfl.com')) {
+        apiBaseUrl = 'https://dd-backend.cp.hupcfl.com/api';
+      } else {
+        // In development, fetch() doesn't use Vite proxy, so use full backend URL
+        apiBaseUrl = 'http://localhost:5000/api';
+      }
+    } else {
+      apiBaseUrl = 'http://localhost:5000/api';
+    }
+    
+    const url = `${apiBaseUrl}/${endpoint}/download/${encodeURIComponent(fileName)}`;
+    console.log('Downloading file from:', url);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to download file');
+    }
+
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = originalName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+  } catch (error) {
+    console.error('Error downloading file:', error);
+    alert('Failed to download file. Please try again.');
+  }
+};
+
 const Dashboard = () => {
   const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
@@ -271,9 +322,12 @@ const Dashboard = () => {
                         <ul className="list-disc list-inside ml-4">
                           {currentResponse.file_paths.map((fileInfo, index) => (
                             <li key={index} className="text-sm flex items-center">
-                              <a href={`/api/responses/download/${encodeURIComponent(fileInfo.storedFileName)}`} download={fileInfo.originalName} className="text-indigo-600 hover:underline">
+                              <button
+                                onClick={() => downloadFile(fileInfo.storedFileName, fileInfo.originalName, 'responses')}
+                                className="text-indigo-600 hover:underline bg-transparent border-none cursor-pointer p-0 text-left"
+                              >
                                 {fileInfo.originalName}
-                              </a>
+                              </button>
                               {/* Only show delete button if it's the user's own response */}
                               {isOwnResponse && (
                                 <button

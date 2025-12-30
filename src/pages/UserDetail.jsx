@@ -4,6 +4,57 @@ import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import Spinner from '../components/Spinner';
 
+// Helper function to download a file programmatically
+const downloadFile = async (fileName, originalName, endpoint = 'responses') => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    // Use the same logic as api.js to determine the base URL
+    // Note: fetch() doesn't use Vite proxy, so we need the full URL in development
+    let apiBaseUrl;
+    if (import.meta.env.VITE_API_BASE_URL) {
+      apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+    } else if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      if (hostname === 'dd.cp.hupcfl.com' || hostname.includes('hupcfl.com')) {
+        apiBaseUrl = 'https://dd-backend.cp.hupcfl.com/api';
+      } else {
+        // In development, fetch() doesn't use Vite proxy, so use full backend URL
+        apiBaseUrl = 'http://localhost:5000/api';
+      }
+    } else {
+      apiBaseUrl = 'http://localhost:5000/api';
+    }
+    
+    const url = `${apiBaseUrl}/${endpoint}/download/${encodeURIComponent(fileName)}`;
+    console.log('Downloading file from:', url);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to download file');
+    }
+
+    const blob = await response.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = originalName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+  } catch (error) {
+    console.error('Error downloading file:', error);
+    alert('Failed to download file. Please try again.');
+  }
+};
+
 const UserDetail = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
@@ -340,9 +391,12 @@ const UserDetail = () => {
                               <ul className="list-disc list-inside ml-4">
                                 {editingResponseFile.map((fileInfo, index) => (
                                   <li key={index} className="text-sm flex items-center">
-                                    <a href={`/api/responses/download/${encodeURIComponent(fileInfo.storedFileName)}`} download={fileInfo.originalName} className="text-indigo-600 hover:underline">
+                                    <button
+                                      onClick={() => downloadFile(fileInfo.storedFileName, fileInfo.originalName, 'responses')}
+                                      className="text-indigo-600 hover:underline bg-transparent border-none cursor-pointer p-0 text-left"
+                                    >
                                       {fileInfo.originalName}
-                                    </a>
+                                    </button>
                                     <button
                                       onClick={() => handleDeleteChecklistFile(userResponse?.id, fileInfo.storedFileName)}
                                       disabled={deletingChecklistFile === fileInfo.storedFileName}
@@ -413,13 +467,12 @@ const UserDetail = () => {
                                     <ul className="list-disc list-inside ml-4 mt-1">
                                       {userResponse.file_paths.map((fileInfo, index) => (
                                         <li key={index} className="text-sm">
-                                          <a
-                                            href={`/api/responses/download/${encodeURIComponent(fileInfo.storedFileName)}`}
-                                            download={fileInfo.originalName}
-                                            className="text-indigo-600 hover:underline"
+                                          <button
+                                            onClick={() => downloadFile(fileInfo.storedFileName, fileInfo.originalName, 'responses')}
+                                            className="text-indigo-600 hover:underline bg-transparent border-none cursor-pointer p-0 text-left"
                                           >
                                             {fileInfo.originalName}
-                                          </a>
+                                          </button>
                                         </li>
                                       ))}
                                     </ul>
@@ -503,13 +556,12 @@ const UserDetail = () => {
               <ul className="divide-y divide-gray-200 border border-gray-200 rounded-md">
                 {userDocuments.map((doc) => (
                   <li key={doc.id} className="p-4 flex items-center justify-between">
-                    <a
-                      href={`/api/documents/download/${encodeURIComponent(doc.storedFileName || doc.file_path)}`}
-                      download={doc.file_name}
-                      className="text-indigo-600 hover:underline flex-grow"
+                    <button
+                      onClick={() => downloadFile(doc.storedFileName || doc.file_path, doc.file_name, 'documents')}
+                      className="text-indigo-600 hover:underline bg-transparent border-none cursor-pointer p-0 text-left flex-grow"
                     >
                       {doc.file_name}
-                    </a>
+                    </button>
                     <button
                       onClick={() => handleDeleteDocument(doc.id)}
                       disabled={deletingDocId === doc.id}
