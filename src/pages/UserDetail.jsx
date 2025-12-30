@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import Spinner from '../components/Spinner';
 
 const UserDetail = () => {
   const { userId } = useParams();
@@ -21,6 +22,10 @@ const UserDetail = () => {
   const [allChecklistItems, setAllChecklistItems] = useState([]); // New state to store all checklist items
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(''); // State for general errors
+  const [isUpdatingResponse, setIsUpdatingResponse] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [deletingDocId, setDeletingDocId] = useState(null);
+  const [deletingChecklistFile, setDeletingChecklistFile] = useState(null);
 
   // Handlers for editing checklist responses
   const handleEditingResponseChange = (value) => {
@@ -79,6 +84,7 @@ const UserDetail = () => {
   }, [userId]);
 
   const handleUpdateResponse = async (responseId, itemId) => {
+    setIsUpdatingResponse(true);
     const formData = new FormData();
     
     // If the current user is an admin, they are updating another user's response
@@ -115,6 +121,8 @@ const UserDetail = () => {
     } catch (err) {
       console.error('Error updating response:', err);
       setResponseMessage('Failed to update response.');
+    } finally {
+      setIsUpdatingResponse(false);
     }
   };
 
@@ -148,6 +156,7 @@ const UserDetail = () => {
       return;
     }
 
+    setIsUploading(true);
     setDocumentMessage('Uploading...');
     const files = Array.isArray(selectedFile) ? selectedFile : [selectedFile];
     
@@ -171,11 +180,14 @@ const UserDetail = () => {
     } catch (err) {
       console.error('Error uploading document:', err);
       setDocumentMessage('Failed to upload document(s).');
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const handleDeleteDocument = async (documentId) => {
     if (window.confirm('Are you sure you want to delete this document?')) {
+      setDeletingDocId(documentId);
       try {
         await api.delete(`/documents/${documentId}`);
         setDocumentMessage('Document deleted successfully!');
@@ -183,12 +195,15 @@ const UserDetail = () => {
       } catch (err) {
         console.error('Error deleting document:', err);
         setDocumentMessage('Failed to delete document.');
+      } finally {
+        setDeletingDocId(null);
       }
     }
   };
 
   const handleDeleteChecklistFile = async (responseId, storedFileName) => {
     if (window.confirm('Are you sure you want to delete this file?')) {
+      setDeletingChecklistFile(storedFileName);
       try {
         await api.delete(`/responses/${responseId}/file`, {
           data: { storedFileName },
@@ -202,6 +217,8 @@ const UserDetail = () => {
       } catch (error) {
         console.error('Error deleting file:', error);
         setResponseMessage('Failed to delete file.');
+      } finally {
+        setDeletingChecklistFile(null);
       }
     }
   };
@@ -328,9 +345,11 @@ const UserDetail = () => {
                                     </a>
                                     <button
                                       onClick={() => handleDeleteChecklistFile(userResponse?.id, fileInfo.storedFileName)}
-                                      className="ml-2 text-red-500 hover:text-red-700 text-xs"
+                                      disabled={deletingChecklistFile === fileInfo.storedFileName}
+                                      className="ml-2 text-red-500 hover:text-red-700 text-xs flex items-center"
                                     >
-                                      Delete
+                                      {deletingChecklistFile === fileInfo.storedFileName && <Spinner />}
+                                      <span className={deletingChecklistFile === fileInfo.storedFileName ? 'ml-1' : ''}>Delete</span>
                                     </button>
                                   </li>
                                 ))}
@@ -361,9 +380,11 @@ const UserDetail = () => {
                           <div className="flex space-x-2">
                             <button
                               onClick={() => handleUpdateResponse(userResponse?.id, item.id)} // Pass response.id if exists, otherwise null
-                              className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                              disabled={isUpdatingResponse}
+                              className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 flex items-center"
                             >
-                              Save
+                              {isUpdatingResponse && <Spinner />}
+                              <span className={isUpdatingResponse ? 'ml-2' : ''}>Save</span>
                             </button>
                             <button
                               onClick={handleCancelEdit}
@@ -468,10 +489,11 @@ const UserDetail = () => {
               )}
               <button
                 onClick={handleUploadDocument}
-                className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                disabled={!selectedFile || (Array.isArray(selectedFile) && selectedFile.length === 0)}
+                className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 flex items-center"
+                disabled={!selectedFile || (Array.isArray(selectedFile) && selectedFile.length === 0) || isUploading}
               >
-                Upload Document
+                {isUploading && <Spinner />}
+                <span className={isUploading ? 'ml-2' : ''}>Upload Document</span>
               </button>
             </div>
             {documentMessage && (
@@ -492,9 +514,11 @@ const UserDetail = () => {
                     </a>
                     <button
                       onClick={() => handleDeleteDocument(doc.id)}
-                      className="ml-4 inline-flex items-center rounded-md border border-transparent bg-red-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                      disabled={deletingDocId === doc.id}
+                      className="ml-4 inline-flex items-center rounded-md border border-transparent bg-red-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 flex items-center"
                     >
-                      Delete
+                      {deletingDocId === doc.id && <Spinner />}
+                      <span className={deletingDocId === doc.id ? 'ml-2' : ''}>Delete</span>
                     </button>
                   </li>
                 ))}

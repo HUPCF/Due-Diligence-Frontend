@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { PlusIcon, EyeIcon, KeyIcon, PencilIcon, TrashIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
+import Spinner from '../components/Spinner';
 
 // Modal Component (reusable)
 const Modal = ({ show, onClose, children }) => {
@@ -25,6 +26,7 @@ const CreateUserModal = ({ show, onClose, onUserCreated, companies }) => {
   const [role, setRole] = useState('user');
   const [companyId, setCompanyId] = useState(companies.length > 0 ? companies[0].id : '');
   const [sendEmailOnCreate, setSendEmailOnCreate] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (companies.length > 0 && !companyId) {
@@ -34,6 +36,7 @@ const CreateUserModal = ({ show, onClose, onUserCreated, companies }) => {
 
   const handleCreateUser = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const response = await api.post('/users', { email, password, role, companyId });
       const newUserId = response.data.userId;
@@ -61,6 +64,8 @@ const CreateUserModal = ({ show, onClose, onUserCreated, companies }) => {
     } catch (error) {
       console.error('Error creating user:', error);
       alert('Failed to create user.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -131,7 +136,10 @@ const CreateUserModal = ({ show, onClose, onUserCreated, companies }) => {
           </div>
           <div className="flex justify-end space-x-3 pt-4">
             <button type="button" onClick={onClose} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md">Cancel</button>
-            <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded-md">Create User</button>
+            <button type="submit" disabled={loading} className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center">
+              {loading && <Spinner />}
+              <span className={loading ? 'ml-2' : ''}>Create User</span>
+            </button>
           </div>
         </form>
       </div>
@@ -143,6 +151,7 @@ const CreateUserModal = ({ show, onClose, onUserCreated, companies }) => {
 const EditUserModal = ({ show, onClose, onUserUpdated, user, companies }) => {
     const [role, setRole] = useState(user?.role || 'user');
     const [companyId, setCompanyId] = useState(user?.company_id || '');
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -153,12 +162,15 @@ const EditUserModal = ({ show, onClose, onUserUpdated, user, companies }) => {
 
     const handleUpdateUser = async (e) => {
         e.preventDefault();
+        setLoading(true);
         try {
             await api.put(`/users/${user.id}`, { role, companyId });
             onUserUpdated();
             onClose();
         } catch (error) {
             console.error('Error updating user:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -193,7 +205,10 @@ const EditUserModal = ({ show, onClose, onUserUpdated, user, companies }) => {
                     </div>
                     <div className="flex justify-end space-x-3 pt-4">
                         <button type="button" onClick={onClose} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md">Cancel</button>
-                        <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded-md">Save Changes</button>
+                        <button type="submit" disabled={loading} className="bg-indigo-600 text-white px-4 py-2 rounded-md flex items-center">
+                            {loading && <Spinner />}
+                            <span className={loading ? 'ml-2' : ''}>Save Changes</span>
+                        </button>
                     </div>
                 </form>
             </div>
@@ -203,13 +218,18 @@ const EditUserModal = ({ show, onClose, onUserUpdated, user, companies }) => {
 
 // DeleteUserModal Component
 const DeleteUserModal = ({ show, onClose, onUserDeleted, user }) => {
+    const [loading, setLoading] = useState(false);
+
     const handleDeleteUser = async () => {
+        setLoading(true);
         try {
             await api.delete(`/users/${user.id}`);
             onUserDeleted();
             onClose();
         } catch (error) {
             console.error('Error deleting user:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -220,7 +240,10 @@ const DeleteUserModal = ({ show, onClose, onUserDeleted, user }) => {
                 <p>Are you sure you want to delete the user <span className="font-semibold">{user?.email}</span>? This action cannot be undone.</p>
                 <div className="flex justify-end space-x-3 pt-4">
                     <button type="button" onClick={onClose} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md">Cancel</button>
-                    <button onClick={handleDeleteUser} className="bg-red-600 text-white px-4 py-2 rounded-md">Delete</button>
+                    <button onClick={handleDeleteUser} disabled={loading} className="bg-red-600 text-white px-4 py-2 rounded-md flex items-center">
+                        {loading && <Spinner />}
+                        <span className={loading ? 'ml-2' : ''}>Delete</span>
+                    </button>
                 </div>
             </div>
         </Modal>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import Spinner from '../components/Spinner';
 
 // Modal Component
 const Modal = ({ show, onClose, children }) => {
@@ -11,9 +12,9 @@ const Modal = ({ show, onClose, children }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md relative">
         {children}
-        <button onClick={onClose} className="absolute top-2 right-2 text-gray-500 hover:text-gray-800">
+        <button onClick={onClose} className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl leading-none">
           &times;
         </button>
       </div>
@@ -24,10 +25,12 @@ const Modal = ({ show, onClose, children }) => {
 // CreateCompanyModal Component
 const CreateCompanyModal = ({ show, onClose, onCompanyCreated }) => {
   const [newCompanyName, setNewCompanyName] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleCreateCompany = async (e) => {
     e.preventDefault();
     if (!newCompanyName.trim()) return;
+    setLoading(true);
     try {
       await api.post('/companies', { name: newCompanyName });
       setNewCompanyName('');
@@ -35,6 +38,8 @@ const CreateCompanyModal = ({ show, onClose, onCompanyCreated }) => {
       onClose();
     } catch (error) {
       console.error('Error creating company:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -56,7 +61,10 @@ const CreateCompanyModal = ({ show, onClose, onCompanyCreated }) => {
         </div>
         <div className="flex justify-end space-x-2">
           <button type="button" onClick={onClose} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300">Cancel</button>
-          <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">Create</button>
+          <button type="submit" disabled={loading} className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center">
+            {loading && <Spinner />}
+            <span className={loading ? 'ml-2' : ''}>Create</span>
+          </button>
         </div>
       </form>
     </Modal>
@@ -66,6 +74,7 @@ const CreateCompanyModal = ({ show, onClose, onCompanyCreated }) => {
 // EditCompanyModal Component
 const EditCompanyModal = ({ show, onClose, company, onCompanyUpdated }) => {
   const [editedCompanyName, setEditedCompanyName] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (company) {
@@ -76,12 +85,15 @@ const EditCompanyModal = ({ show, onClose, company, onCompanyUpdated }) => {
   const handleUpdateCompany = async (e) => {
     e.preventDefault();
     if (!editedCompanyName.trim()) return;
+    setLoading(true);
     try {
       await api.put(`/companies/${company.id}`, { name: editedCompanyName });
       onCompanyUpdated();
       onClose();
     } catch (error) {
       console.error('Error updating company:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -102,7 +114,10 @@ const EditCompanyModal = ({ show, onClose, company, onCompanyUpdated }) => {
         </div>
         <div className="flex justify-end space-x-2">
           <button type="button" onClick={onClose} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300">Cancel</button>
-          <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">Save Changes</button>
+          <button type="submit" disabled={loading} className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center">
+            {loading && <Spinner />}
+            <span className={loading ? 'ml-2' : ''}>Save Changes</span>
+          </button>
         </div>
       </form>
     </Modal>
@@ -111,13 +126,18 @@ const EditCompanyModal = ({ show, onClose, company, onCompanyUpdated }) => {
 
 // DeleteCompanyModal Component
 const DeleteCompanyModal = ({ show, onClose, company, onCompanyDeleted }) => {
+  const [loading, setLoading] = useState(false);
+
   const handleDeleteCompany = async () => {
+    setLoading(true);
     try {
       await api.delete(`/companies/${company.id}`);
       onCompanyDeleted();
       onClose();
     } catch (error) {
       console.error('Error deleting company:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -127,7 +147,10 @@ const DeleteCompanyModal = ({ show, onClose, company, onCompanyDeleted }) => {
       <p>Are you sure you want to delete <span className="font-semibold">{company?.name}</span>? This action cannot be undone.</p>
       <div className="flex justify-end space-x-2 mt-4">
         <button type="button" onClick={onClose} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300">Cancel</button>
-        <button onClick={handleDeleteCompany} className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700">Delete</button>
+        <button onClick={handleDeleteCompany} disabled={loading} className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 flex items-center">
+          {loading && <Spinner />}
+          <span className={loading ? 'ml-2' : ''}>Delete</span>
+        </button>
       </div>
     </Modal>
   );
