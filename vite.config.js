@@ -8,7 +8,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'https://dd-backend.cp.hupcfl.com/api',
+        target: 'https://dd-backend.cp.hupcfl.com',
         changeOrigin: true,
       }
     }
