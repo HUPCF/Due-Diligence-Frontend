@@ -275,7 +275,9 @@ const ResetPasswordModal = ({ show, onClose, user, onPasswordReset }) => {
           alert('Password reset successfully and credentials email sent!');
         } catch (emailError) {
           console.error('Error sending email:', emailError);
-          alert('Password reset successfully, but failed to send email.');
+          const errorMessage = emailError.response?.data?.error || emailError.response?.data?.message || emailError.message || 'Unknown error';
+          console.error('Email error details:', emailError.response?.data);
+          alert(`Password reset successfully, but failed to send email: ${errorMessage}`);
         }
       } else {
         alert('Password reset successfully!');
