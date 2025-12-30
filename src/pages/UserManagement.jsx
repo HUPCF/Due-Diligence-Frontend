@@ -474,7 +474,7 @@ const UserManagement = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-4">
-                      <button onClick={() => { setSelectedUser(user); setShowEditModal(true); }} className="text-indigo-600 hover:text-indigo-900" title="Edit User"><PencilIcon className="h-5 w-5 inline" /></button>
+
                       <button onClick={() => { setSelectedUser(user); setShowResetPasswordModal(true); }} className="text-yellow-600 hover:text-yellow-900" title="Reset Password"><KeyIcon className="h-5 w-5 inline" /></button>
                       <button onClick={() => { setSelectedUser(user); setShowSendCredentialsModal(true); }} className="text-green-600 hover:text-green-900" title="Send Credentials Email"><EnvelopeIcon className="h-5 w-5 inline" /></button>
                      
